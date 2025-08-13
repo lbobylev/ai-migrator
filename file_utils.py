@@ -1,13 +1,8 @@
 import os
-from langchain_core.tools import tool
 import questionary
 import pandas as pd
-from tabulate import tabulate
-import json
 from typing import Optional, Union, List
-import numpy as np
 
-@tool
 def select_file(start_path="/Users/leonid/Downloads") -> str | None:
     """Select a file from the specified directory. Use this when the user
     mentions an attached file, a file to pick or a spreadsheet to update."""
@@ -31,7 +26,6 @@ def select_file(start_path="/Users/leonid/Downloads") -> str | None:
         return os.path.join(start_path, file_name)
     return None
 
-@tool
 def read_excel(file_path: str, sheet: Optional[Union[int, str]] = 0) -> List[dict]:
     """
     Convert an Excel file to a list of dictionaries.

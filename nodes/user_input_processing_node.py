@@ -1,0 +1,41 @@
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+from app_types import MyState
+from utils import LoggerInterface, make_retry_call
+
+
+def make_user_input_processing_node(logger: LoggerInterface, llm: ChatOpenAI):
+    retry_call = make_retry_call(logger)
+
+    def user_input_processing_node(state: MyState) -> MyState:
+        system_prompt = """
+        You should process the user input and return it as a string.
+        The user input should be prepaged for futher classification.
+        You should remove any unnecessary information, such as greetings, and focus on the main request.
+        You should fix grammatical errors and typos, but do not change the meaning of the request.
+        You shoudl make it as much concise as possible, but still keep the main request intact.
+        You should keep all the urls and other important information that can be used for further processing.
+        """
+
+        issue = state.get("issue")
+        if not issue:
+            logger.error("Issue is not provided in the state.")
+            return state
+
+        user_input = f"{issue["title"]}\n{issue["body"]}"
+
+        response = retry_call(
+            lambda: llm.invoke(
+                [
+                    SystemMessage(content=system_prompt),
+                    HumanMessage(content=user_input),
+                ]
+            )
+        )
+
+        return {
+            **state,
+            "user_prompt": str(response.content)
+        }
+
+    return user_input_processing_node
